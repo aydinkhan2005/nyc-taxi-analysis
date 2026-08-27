@@ -2,25 +2,29 @@ import geopandas as gpd
 from shapely.geometry import Point
 from pyspark.sql.functions import coalesce, lit
 def add_stations(station_data, df, spark):
+    """
+    Add the number of subway stations in each taxi zone to the input DataFrame.
+    
+    Parameters:
+    - station_data: Spark DataFrame containing subway station data with 'GTFS Latitude' and 'GTFS Longitude' columns.
+    - df: Spark DataFrame containing taxi trip data with 'PULocationID' column.
+    - spark: SparkSession object.
 
-    # ---------------------------------------------------------
-    # 1. Read taxi zone polygons
-    # ---------------------------------------------------------
+    Returns:
+    - Spark DataFrame with an additional column 'num_stations' indicating the number of subway stations in each taxi zone.
+    """
+    # Read taxi zone polygons
     taxi_zones_geo = gpd.read_file(
         "data/taxi_zones/taxi_zones.shp"
     )
 
-    # ---------------------------------------------------------
-    # 2. Convert station_data from Spark -> Pandas
-    # ---------------------------------------------------------
+    # Convert station_data from Spark -> Pandas
     stations_pd = station_data.toPandas()
 
     stations_pd["GTFS Latitude"] = stations_pd["GTFS Latitude"].astype(float)
     stations_pd["GTFS Longitude"] = stations_pd["GTFS Longitude"].astype(float)
 
-    # ---------------------------------------------------------
-    # 3. Create GeoDataFrame of subway stations
-    # ---------------------------------------------------------
+    # Create GeoDataFrame of subway stations
     stations_geo = gpd.GeoDataFrame(
         stations_pd,
         geometry=[
@@ -33,14 +37,10 @@ def add_stations(station_data, df, spark):
         crs="EPSG:4326"
     )
 
-    # ---------------------------------------------------------
-    # 4. Make sure both GeoDataFrames use the same CRS
-    # ---------------------------------------------------------
+    # Make sure both GeoDataFrames use the same CRS
     taxi_zones_geo = taxi_zones_geo.to_crs(stations_geo.crs)
 
-    # ---------------------------------------------------------
-    # 5. Assign each station to a taxi zone
-    # ---------------------------------------------------------
+    # Assign each station to a taxi zone
     station_zones = gpd.sjoin(
         stations_geo,
         taxi_zones_geo[["LocationID", "geometry"]],
@@ -48,9 +48,7 @@ def add_stations(station_data, df, spark):
         predicate="within"
     )
 
-    # ---------------------------------------------------------
-    # 6. Count stations in each taxi zone
-    # ---------------------------------------------------------
+    # Count stations in each taxi zone
     station_counts = (
         station_zones
         .dropna(subset=["LocationID"])
@@ -61,16 +59,12 @@ def add_stations(station_data, df, spark):
 
     station_counts["LocationID"] = station_counts["LocationID"].astype(int)
 
-    # ---------------------------------------------------------
-    # 7. Convert station counts back to Spark
-    # ---------------------------------------------------------
+    # Convert station counts back to Spark
     station_counts_spark = spark.createDataFrame(
         station_counts
     )
 
-    # ---------------------------------------------------------
-    # 8. Join station counts to the input DataFrame
-    # ---------------------------------------------------------
+    # Join station counts to the input DataFrame
     df = (
         df
         .join(
@@ -81,9 +75,7 @@ def add_stations(station_data, df, spark):
         .drop("LocationID")
     )
 
-    # ---------------------------------------------------------
-    # 9. Zones without stations get 0
-    # ---------------------------------------------------------
+    # Zones without stations get 0
     df = df.withColumn(
         "num_stations",
         coalesce("num_stations", lit(0))
@@ -92,19 +84,25 @@ def add_stations(station_data, df, spark):
     return df
 
 def add_unemployment_rate(df, spark):
+    """
+    Add the unemployment rate for each taxi trip based on the pickup location and date.
+    
+    Parameters:
+    - df: Spark DataFrame containing taxi trip data with 'PULocationID' and 'date' columns.
+    - spark: SparkSession object.
+
+    Returns:
+    - Spark DataFrame with an additional column 'unemployment_rate' indicating the unemployment rate for the corresponding taxi zone and date.
+    """
     from pyspark.sql import functions as F
-    # ---------------------------------------------------------
-    # 1. Create Year and Month from pickup timestamp
-    # ---------------------------------------------------------
+    # Create Year and Month from pickup timestamp
     df = (
         df
         .withColumn("Year", F.year("date"))
         .withColumn("Month", F.month("date"))
     )
 
-    # ---------------------------------------------------------
-    # 2. Read unemployment data
-    # ---------------------------------------------------------
+    # Read unemployment data
     unemployment = (
         spark.read
         .option("header", True)
@@ -112,9 +110,7 @@ def add_unemployment_rate(df, spark):
         .csv("data/unemployment.csv")
     )
 
-    # ---------------------------------------------------------
-    # 3. Read taxi zone lookup
-    # ---------------------------------------------------------
+    # Read taxi zone lookup
     taxi_zones = (
         spark.read
         .option("header", True)
@@ -122,9 +118,7 @@ def add_unemployment_rate(df, spark):
         .csv("data/taxi_zone_lookup.csv")
     )
 
-    # ---------------------------------------------------------
-    # 4. Map taxi borough -> county name
-    # ---------------------------------------------------------
+    # Map taxi borough -> county name
     taxi_zones = taxi_zones.withColumn(
         "Area Name",
         F.when(F.col("Borough") == "Bronx", "Bronx County")
@@ -134,9 +128,7 @@ def add_unemployment_rate(df, spark):
          .when(F.col("Borough") == "Staten Island", "Richmond County")
     )
 
-    # ---------------------------------------------------------
-    # 5. Clean unemployment data
-    # ---------------------------------------------------------
+    # Clean unemployment data
 
     # Convert "4.2%" -> 4.2
     unemployment = unemployment.withColumn(
@@ -169,9 +161,7 @@ def add_unemployment_rate(df, spark):
         )
     )
 
-    # ---------------------------------------------------------
-    # 6. Create borough/year/month unemployment lookup
-    # ---------------------------------------------------------
+    # Create borough/year/month unemployment lookup
     borough_unemployment = (
         unemployment
         .select(
@@ -182,9 +172,7 @@ def add_unemployment_rate(df, spark):
         )
     )
 
-    # ---------------------------------------------------------
-    # 7. Attach unemployment data to each taxi zone
-    # ---------------------------------------------------------
+    # Attach unemployment data to each taxi zone
     zone_unemployment = (
         taxi_zones
         .join(
@@ -200,9 +188,7 @@ def add_unemployment_rate(df, spark):
         )
     )
 
-    # ---------------------------------------------------------
-    # 8. Join unemployment rate onto df
-    # ---------------------------------------------------------
+    # Join unemployment rate onto df
     df = (
         df.alias("df")
         .join(
