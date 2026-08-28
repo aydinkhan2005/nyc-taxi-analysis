@@ -1,18 +1,19 @@
 import geopandas as gpd
 from shapely.geometry import Point
 from pyspark.sql.functions import coalesce, lit
-def add_stations(station_data, df, spark):
+def add_stations(df, spark):
     """
     Add the number of subway stations in each taxi zone to the input DataFrame.
     
     Parameters:
-    - station_data: Spark DataFrame containing subway station data with 'GTFS Latitude' and 'GTFS Longitude' columns.
     - df: Spark DataFrame containing taxi trip data with 'PULocationID' column.
     - spark: SparkSession object.
 
     Returns:
     - Spark DataFrame with an additional column 'num_stations' indicating the number of subway stations in each taxi zone.
     """
+
+    station_data = spark.read.csv('data/station_data.csv', header=True, inferSchema=True)
     # Read taxi zone polygons
     taxi_zones_geo = gpd.read_file(
         "data/taxi_zones/taxi_zones.shp"
