@@ -21,6 +21,7 @@ executing==2.2.1
 fastjsonschema==2.22.1
 fonttools==4.63.0
 fqdn==1.5.1
+geopandas
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
@@ -91,9 +92,12 @@ rfc3986-validator==0.1.1
 rfc3987-syntax==1.1.0
 rpds-py==2026.6.3
 Send2Trash==2.1.0
+scipy
+scikit-learn
 six==1.17.0
 soupsieve==2.9.1
 stack-data==0.6.3
+statsmodels
 terminado==0.18.1
 tinycss2==1.5.1
 tornado==6.5.7
