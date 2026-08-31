@@ -29,3 +29,4 @@
 * New York City Taxi and Limousine Commission. *Taxi Zone Shapefile*. 2026, https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page. Accessed 27 Aug. 2026.
 * New York City Taxi and Limousine Commission. *TLC Trip Record Data*. 2026, https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page. Accessed 1 May 2026.
 * scikit-learn developers. "sklearn.model_selection.TimeSeriesSplit Documentation." *scikit-learn*, 2026, https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html. Accessed 31 Aug. 2026.
+* "Generalized Least Squares." Wikipedia, Wikimedia Foundation, 2026, https://en.wikipedia.org/wiki/Generalized_least_squares. Accessed 31 Aug. 2026.
