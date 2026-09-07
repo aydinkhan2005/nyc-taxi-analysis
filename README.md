@@ -1,3 +1,4 @@
+<img src="https://img.shields.io/badge/PySpark-FFB84D?style=for-the-badge" alt="PySpark"> <img src="https://img.shields.io/badge/StatsModels-4A235A?style=for-the-badge" alt="StatsModels"> <img src="https://img.shields.io/badge/Pandas-1F4788?style=for-the-badge" alt="Pandas"> <img src="https://img.shields.io/badge/Matplotlib-2ECC71?style=for-the-badge" alt="Matplotlib">
 # Instructions to run repository
 
 1. Download dependencies using the command:
